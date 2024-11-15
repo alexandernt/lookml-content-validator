@@ -1,0 +1,23 @@
+# Based on recommendations from https://www.semver.org/
+
+changelog:
+  exclude:
+    labels:
+      - ignore-for-release
+      - documentation
+  categories:
+    - title: 🚧 Breaking Change 🚧
+      labels:
+        - breaking-change
+    - title: 🔨 Fixes 🔨
+      labels:
+        - bugfix
+    - title: 👀 New Content 👀
+      labels:
+        - new-content
+    - title: 💥 Content Updates 💥
+      labels:
+        - enhancement
+    - title: ☑️ Other Changes ☑️
+      labels:
+        - "*"
