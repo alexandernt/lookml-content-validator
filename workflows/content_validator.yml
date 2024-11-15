@@ -1,0 +1,50 @@
+name: Content Validator Check
+on:
+  pull_request:
+    branches: [main]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+    steps:
+    
+    - name: Checkout code
+      uses: actions/checkout@v4
+   
+    - name: Set up Python 3.10
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.10"
+        cache: 'pip' # cache pip dependencies
+        cache-dependency-path: .github/content_validator/requirements.txt
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r .github/content_validator/requirements.txt
+    
+    - name: Authenticate with GCP through Workload Identity Pool
+      id: auth
+      uses: 'google-github-actions/auth@v2'
+      with:
+        workload_identity_provider: '[FILL WORKLOAD IDENTITY PROVIDER]' #https://cloud.google.com/iam/docs/workload-identity-federation
+        service_account: '[FILL SERVICE ACCOUNT]'
+    
+    - name: Authenticate with GCP and fetch secrets
+      uses: 'google-github-actions/get-secretmanager-secrets@v2'
+      id: 'secrets'
+      with:
+        secrets: |- # Google Secret Manager
+          [TOKEN LOOKER API_CREDENTIALS]
+    
+    - name: Run content validator
+      env:
+        LOOKERSDK_API_VERSION: ${{ fromJson(steps.secrets.outputs.token).LOOKERSDK_API_VERSION }}
+        LOOKERSDK_BASE_URL: ${{ fromJson(steps.secrets.outputs.token).LOOKERSDK_BASE_URL }}
+        LOOKERSDK_CLIENT_ID: ${{ fromJson(steps.secrets.outputs.token).LOOKERSDK_CLIENT_ID }}
+        LOOKERSDK_CLIENT_SECRET: ${{ fromJson(steps.secrets.outputs.token).LOOKERSDK_CLIENT_SECRET }}
+      run: |
+        cd .github
+        python content_validator/content_validator.py --project "[FILL WITH YOUR PROJECT]" --branch "${{ github.head_ref }}"
